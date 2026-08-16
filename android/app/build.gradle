@@ -1,0 +1,29 @@
+// Top-level android/app/build.gradle for setting minSdkVersion
+// This is a simplified build.gradle to ensure minSdkVersion=24 as requested.
+// If your project already has a different structure, please merge these values into it.
+
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 33
+
+    defaultConfig {
+        applicationId "com.example.reproductor_de_musica"
+        minSdkVersion 24
+        targetSdkVersion 33
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+}
