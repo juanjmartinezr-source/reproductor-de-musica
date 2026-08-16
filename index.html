@@ -1,0 +1,1085 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mi Entretenimiento</title>
+  <meta name="description" content="App estática para rastrear series, películas y canciones (localStorage).">
+  <style>
+    :root{
+      --bg: #0b0e12;
+      --card: #0f1720;
+      --muted: #98a0ab;
+      --accent: #6ee7b7;
+      --danger: #ff6b6b;
+      --glass: rgba(255,255,255,0.03);
+      --glass-2: rgba(255,255,255,0.02);
+      --text: #e6eef6;
+      --radius: 10px;
+      --max-width: 980px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    /* Mobile-first layout */
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:
+        radial-gradient(800px 400px at 10% 10%, rgba(110,231,183,0.04), transparent 6%),
+        radial-gradient(600px 300px at 90% 90%, rgba(102,126,234,0.03), transparent 6%),
+        var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:18px;
+      box-sizing:border-box;
+      display:flex;
+      justify-content:center;
+    }
+
+    .wrap{
+      width:100%;
+      max-width:var(--max-width);
+    }
+
+    header{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+
+    h1{
+      font-size:1.1rem;
+      margin:0;
+      letter-spacing:0.2px;
+    }
+
+    .stats{
+      margin-left:auto;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .stat{
+      background:linear-gradient(180deg,var(--glass),var(--glass-2));
+      padding:8px 10px;
+      border-radius:8px;
+      font-size:0.9rem;
+      color:var(--muted);
+      display:flex;
+      gap:8px;
+      align-items:center;
+      min-width:88px;
+      justify-content:center;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.02) inset;
+    }
+    .stat strong{color:var(--text); font-weight:700;}
+
+    main{
+      display:grid;
+      gap:14px;
+    }
+
+    .panels{
+      display:grid;
+      gap:12px;
+    }
+
+    /* input areas / import */
+    .import-row{
+      display:grid;
+      gap:8px;
+      grid-template-columns: 1fr;
+    }
+
+    textarea{
+      width:100%;
+      min-height:120px;
+      resize:vertical;
+      padding:12px;
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.04);
+      border-radius:8px;
+      color:var(--text);
+      font-size:0.95rem;
+      outline:none;
+    }
+
+    .controls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    button, input[type="submit"]{
+      background:linear-gradient(180deg,var(--accent), #4fd9a8);
+      border:none;
+      color:#031018;
+      padding:8px 12px;
+      border-radius:8px;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow: 0 6px 18px rgba(16,24,40,0.4);
+    }
+    button.secondary{
+      background:transparent;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,0.03);
+      box-shadow:none;
+    }
+    button.danger{
+      background:linear-gradient(180deg,var(--danger), #ff4b4b);
+      color:#1b0b0b;
+    }
+
+    label{
+      font-size:0.85rem;
+      color:var(--muted);
+      display:block;
+      margin-bottom:4px;
+    }
+
+    .form-row{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:8px;
+    }
+
+    .manual-form{
+      background:linear-gradient(180deg,var(--card), rgba(255,255,255,0.01));
+      padding:12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.02);
+    }
+
+    .manual-form .grid{
+      display:grid;
+      gap:8px;
+      grid-template-columns: 1fr;
+    }
+
+    select,input[type="text"],textarea.form-note{
+      padding:8px;
+      border-radius:8px;
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.03);
+      color:var(--text);
+      outline:none;
+      font-size:0.95rem;
+    }
+
+    .cards{
+      display:grid;
+      gap:10px;
+      margin-top:6px;
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.006));
+      padding:12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.02);
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      box-shadow: 0 8px 30px rgba(2,6,23,0.5);
+    }
+
+    .thumb{
+      width:56px;
+      height:56px;
+      border-radius:8px;
+      background: linear-gradient(135deg,#1f2937,#0f1720);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--muted);
+      font-weight:700;
+      flex-shrink:0;
+      font-size:0.95rem;
+    }
+
+    .card-body{
+      flex:1;
+      min-width:0;
+    }
+
+    .card-title{
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      align-items:center;
+    }
+
+    .card-title h3{
+      margin:0;
+      font-size:0.98rem;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .meta{
+      color:var(--muted);
+      font-size:0.86rem;
+      margin-top:6px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .card-actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    .small{
+      font-size:0.8rem;
+      padding:6px 8px;
+      border-radius:8px;
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.02);
+      color:var(--muted);
+    }
+
+    .edit-form input[type="text"], .edit-form select, .edit-form textarea{
+      width:100%;
+      margin-top:6px;
+    }
+
+    footer{
+      margin-top:18px;
+      color:var(--muted);
+      font-size:0.85rem;
+      text-align:center;
+    }
+
+    /* Filters row */
+    .filters{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .tabs{
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+    .tab{
+      padding:6px 10px;
+      border-radius:999px;
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.03);
+      color:var(--muted);
+      cursor:pointer;
+    }
+    .tab.active{
+      background:linear-gradient(180deg,var(--accent), #4fd9a8);
+      color:#012;
+      font-weight:700;
+    }
+
+    .search{
+      flex:1;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .search input{flex:1}
+
+    /* Recommendations area */
+    .board{
+      display:grid;
+      gap:8px;
+      margin-bottom:8px;
+    }
+    .board .panel{
+      background:var(--card);
+      border-radius:10px;
+      padding:10px;
+      border:1px solid rgba(255,255,255,0.02);
+    }
+
+    /* Larger screens: two columns for import + manual on the same row */
+    @media(min-width:820px){
+      .panels{
+        grid-template-columns: 1fr 360px;
+        align-items:start;
+      }
+      .import-row{
+        grid-template-columns: 1fr 1fr;
+      }
+      .manual-form .grid{
+        grid-template-columns: 1fr;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="wrap" role="application" aria-labelledby="app-title">
+    <header>
+      <div>
+        <h1 id="app-title">Mi Entretenimiento</h1>
+        <div style="color:var(--muted);font-size:0.85rem">Guarda series, películas y canciones en tu navegador (sin backend).</div>
+      </div>
+
+      <div class="stats" aria-live="polite">
+        <div class="stat">Total: <strong id="stat-total">0</strong></div>
+        <div class="stat">Series: <strong id="stat-series">0</strong></div>
+        <div class="stat">Películas: <strong id="stat-movies">0</strong></div>
+        <div class="stat">Canciones: <strong id="stat-songs">0</strong></div>
+      </div>
+    </header>
+
+    <main>
+      <section class="panels" aria-label="Importar y agregar manualmente">
+        <div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+            <strong>Importar desde AniList/Trakt y Spotify</strong>
+            <div style="margin-left:auto;color:var(--muted);font-size:0.9rem">Acepta: línea por entrada, CSV o JSON</div>
+          </div>
+
+          <div class="import-row">
+            <div>
+              <label for="import-anilist">AniList / Trakt (series/películas)</label>
+              <textarea id="import-anilist" placeholder="Pega aquí el listado exportado de AniList o Trakt. Una entrada por línea, CSV o JSON."></textarea>
+            </div>
+
+            <div>
+              <label for="import-spotify">Spotify (canciones/artistas)</label>
+              <textarea id="import-spotify" placeholder="Pega aquí canciones/artistas. Formatos comunes: 'Artista - Canción' por línea, CSV o JSON."></textarea>
+            </div>
+          </div>
+
+          <div class="controls" style="margin-top:8px;">
+            <button id="btn-import">Importar</button>
+            <button id="btn-clear-import" class="secondary">Limpiar import</button>
+            <button id="btn-clear-all" class="danger">Eliminar todo</button>
+          </div>
+        </div>
+
+        <aside class="manual-form" aria-label="Agregar manualmente">
+          <strong>Añadir manualmente</strong>
+          <form id="manual-form" class="grid" onsubmit="return false;" style="margin-top:8px">
+            <div class="form-row">
+              <label for="m-title">Título</label>
+              <input id="m-title" type="text" required placeholder="Ej: Breaking Bad / Parasite / Blinding Lights" />
+            </div>
+
+            <div class="form-row">
+              <label for="m-type">Tipo</label>
+              <select id="m-type">
+                <option value="serie">Serie</option>
+                <option value="película">Película</option>
+                <option value="canción">Canción</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="m-status">Estado</label>
+              <select id="m-status">
+                <option value="planeada">Planeada</option>
+                <option value="viendo">Viendo</option>
+                <option value="completada">Completada</option>
+                <option value="pausada">Pausada</option>
+                <option value="abandonada">Abandonada</option>
+                <option value="continua_manga">Finalizada (continúa en manga)</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="m-note">Nota personal</label>
+              <textarea id="m-note" class="form-note" rows="3" placeholder="Tu comentario..."></textarea>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <input id="m-add" type="submit" value="Agregar" />
+              <button id="m-reset" class="secondary" type="button">Limpiar</button>
+            </div>
+          </form>
+        </aside>
+      </section>
+
+      <!-- Filters and recommendations -->
+      <section class="board" aria-label="Filtros y recomendaciones">
+        <div class="panel" style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="tabs" role="tablist" aria-label="Filtro de finalizado">
+              <button class="tab" data-tab="all">Todos</button>
+              <button class="tab" data-tab="finalizadas">✅ Finalizadas</button>
+              <button class="tab" data-tab="finalizadas_manga">📖 Finalizadas (continúa manga)</button>
+              <button class="tab" data-tab="no_finalizadas">⏳ Aún no finalizadas</button>
+            </div>
+
+            <div class="search">
+              <input id="search" type="text" placeholder="Buscar por título..." />
+              <select id="filter-type" style="width:160px">
+                <option value="all">Tipo: todos</option>
+                <option value="serie">Serie</option>
+                <option value="película">Película</option>
+                <option value="canción">Canción</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div class="panel" style="min-width:220px;flex:1">
+              <strong>Qué ver ahora</strong>
+              <div id="watch-now" style="margin-top:6px;color:var(--muted)">—</div>
+            </div>
+
+            <div class="panel" style="min-width:220px;flex:1">
+              <strong>Lecturas sugeridas</strong>
+              <div id="read-suggest" style="margin-top:6px;color:var(--muted)">—</div>
+            </div>
+
+            <div class="panel" style="min-width:220px;flex:1">
+              <strong>Música nueva</strong>
+              <div id="music-suggest" style="margin-top:6px;color:var(--muted)">—</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-label="Tarjetas y lista" style="margin-top:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <strong>Lista</strong>
+          <div style="color:var(--muted);font-size:0.9rem">Haz clic en Editar para modificar una tarjeta.</div>
+        </div>
+
+        <div id="cards" class="cards" aria-live="polite"></div>
+      </section>
+
+      <footer>
+        Archivo en localStorage — no se comparte con nadie. Compatible con GitHub Pages: sube este index.html al repo.
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    (function(){
+      // Storage key
+      const STORAGE_KEY = 'mi_tracker_entretenimiento_v1';
+
+      // App state
+      let items = [];
+      let activeTab = 'all';
+      let searchQuery = '';
+      let typeFilter = 'all';
+
+      // DOM refs
+      const $anilist = document.getElementById('import-anilist');
+      const $spotify = document.getElementById('import-spotify');
+      const $btnImport = document.getElementById('btn-import');
+      const $btnClearImport = document.getElementById('btn-clear-import');
+      const $btnClearAll = document.getElementById('btn-clear-all');
+      const $cards = document.getElementById('cards');
+      const $statTotal = document.getElementById('stat-total');
+      const $statSeries = document.getElementById('stat-series');
+      const $statMovies = document.getElementById('stat-movies');
+      const $statSongs = document.getElementById('stat-songs');
+
+      const $manualForm = document.getElementById('manual-form');
+      const $mTitle = document.getElementById('m-title');
+      const $mType = document.getElementById('m-type');
+      const $mStatus = document.getElementById('m-status');
+      const $mNote = document.getElementById('m-note');
+      const $mAdd = document.getElementById('m-add');
+      const $mReset = document.getElementById('m-reset');
+
+      const $tabs = Array.from(document.querySelectorAll('.tab'));
+      const $search = document.getElementById('search');
+      const $filterType = document.getElementById('filter-type');
+      const $watchNow = document.getElementById('watch-now');
+      const $readSuggest = document.getElementById('read-suggest');
+      const $musicSuggest = document.getElementById('music-suggest');
+
+      // Music genre mapping (local table). This is a small example map to suggest similar artists by genre.
+      const ARTIST_TO_GENRES = {
+        'the beatles': ['rock','classic rock','pop'],
+        'queen': ['rock','classic rock'],
+        'bts': ['kpop','pop'],
+        'ed sheeran': ['pop','acoustic'],
+        'taylor swift': ['pop','country'],
+        'daft punk': ['electronic','house'],
+        'calvin harris': ['electronic','dance'],
+        'arctic monkeys': ['indie','rock'],
+        'billie eilish': ['pop','alternative'],
+        'metallica': ['metal','rock']
+      };
+
+      // Genre affinity table: similar genres -> suggested genres/artists
+      const GENRE_AFFINITY = {
+        'pop': ['electronic','dance','indie'],
+        'rock': ['classic rock','indie','metal'],
+        'indie': ['alternative','pop'],
+        'electronic': ['dance','house'],
+        'kpop': ['pop','electronic'],
+        'metal': ['rock']
+      };
+
+      // Utilities
+      function uid(){
+        return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+      }
+
+      function save(){
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+        render();
+      }
+
+      function load(){
+        try{
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if(raw) items = JSON.parse(raw) || [];
+        }catch(e){
+          console.error('Error leyendo storage', e);
+          items = [];
+        }
+      }
+
+      function updateStats(){
+        const total = items.length;
+        const series = items.filter(i => i.type === 'serie').length;
+        const movies = items.filter(i => i.type === 'película').length;
+        const songs = items.filter(i => i.type === 'canción').length;
+        $statTotal.textContent = total;
+        $statSeries.textContent = series;
+        $statMovies.textContent = movies;
+        $statSongs.textContent = songs;
+      }
+
+      // CSV parser (simple, supports quoted fields)
+      function parseCSVLine(line){
+        const out = [];
+        let cur = '';
+        let inQuotes = false;
+        for(let i=0;i<line.length;i++){
+          const ch = line[i];
+          if(ch === '"' ){
+            if(inQuotes && line[i+1] === '"'){ cur += '"'; i++; continue; }
+            inQuotes = !inQuotes;
+            continue;
+          }
+          if(ch === ',' && !inQuotes){
+            out.push(cur);
+            cur = '';
+            continue;
+          }
+          cur += ch;
+        }
+        out.push(cur);
+        return out.map(s => s.trim());
+      }
+
+      function parseTextInput(text){
+        text = (text || '').trim();
+        if(!text) return [];
+
+        // Try JSON
+        try{
+          const parsed = JSON.parse(text);
+          if(Array.isArray(parsed)){
+            // array of strings or objects
+            return parsed.map(it => {
+              if(typeof it === 'string') return { raw: it };
+              if(typeof it === 'object'){
+                return {
+                  title: it.title || it.name || it.song || it.track || it.anime || it.movie || it.artist || it.name,
+                  artist: it.artist || it.artists || it.creator,
+                  status: it.status || it.progress,
+                  raw: JSON.stringify(it)
+                };
+              }
+              return { raw: String(it) };
+            });
+          } else if(typeof parsed === 'object'){
+            return [{ title: parsed.title || parsed.name || parsed.song || JSON.stringify(parsed), raw: JSON.stringify(parsed)}];
+          }
+        }catch(e){
+          // not JSON
+        }
+
+        const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+        const results = [];
+        for(const line of lines){
+          if(line.includes(',') && parseCSVLine(line).length > 1){
+            const cols = parseCSVLine(line);
+            results.push({ raw: line, cols });
+            continue;
+          }
+          if(line.includes(' - ')){
+            const [a,b] = line.split(' - ').map(s=>s.trim());
+            results.push({ title: b || a, artist: a });
+            continue;
+          }
+          results.push({ title: line });
+        }
+        return results;
+      }
+
+      // Heuristics for AniList/Trakt entry -> decide serie vs película
+      function guessTypeFromAnilistText(text){
+        if(!text) return 'serie';
+        const low = text.toLowerCase();
+        if(low.includes('movie') || low.includes('film') || low.includes('película') || low.includes('film') || low.includes('movie')) return 'película';
+        if(low.includes('season') || low.includes('ep') || low.includes('episode') || low.includes('tv') ) return 'serie';
+        return 'serie';
+      }
+
+      // Import handlers
+      function importFromAreas(){
+        const aText = $anilist.value;
+        const sText = $spotify.value;
+        const aParsed = parseTextInput(aText);
+        const sParsed = parseTextInput(sText);
+
+        const newItems = [];
+
+        aParsed.forEach(entry => {
+          let title = entry.title || entry.raw || (entry.cols && entry.cols[0]) || '';
+          title = String(title).trim();
+          if(!title) return;
+          const type = guessTypeFromAnilistText(entry.raw || title);
+          // status mapping - if the raw contains keywords about continuation
+          let status = entry.status || (entry.cols && entry.cols[1]) || 'planeada';
+          const rawLow = (entry.raw||title||'').toLowerCase();
+          if(rawLow.includes('completed') || rawLow.includes('completada') || rawLow.includes('finalizada')) status = 'completada';
+          if(rawLow.includes('continua') || rawLow.includes('manga') || rawLow.includes('manga ongoing') || rawLow.includes('continúa')) status = 'continua_manga';
+
+          newItems.push({
+            id: uid(),
+            title,
+            type,
+            status,
+            note: '',
+            meta: entry.raw || (entry.cols && JSON.stringify(entry.cols)) || ''
+          });
+        });
+
+        // From Spotify area -> canciones
+        sParsed.forEach(entry => {
+          let title = entry.title || entry.raw || (entry.cols && entry.cols[1]) || '';
+          let artist = entry.artist || (entry.cols && entry.cols[0]) || '';
+          if(!title && entry.cols && entry.cols.length === 2){
+            title = entry.cols[1];
+            artist = entry.cols[0];
+          }
+          if(!title && entry.raw) title = entry.raw;
+          title = String(title).trim();
+          if(!title) return;
+          const displayTitle = artist ? (title + ' — ' + artist) : title;
+          newItems.push({
+            id: uid(),
+            title: displayTitle,
+            type: 'canción',
+            status: 'guardada',
+            note: '',
+            meta: entry.raw || (entry.cols && JSON.stringify(entry.cols)) || ''
+          });
+        });
+
+        if(newItems.length){
+          items = items.concat(newItems);
+          dedupeAndSave();
+        }
+        render();
+      }
+
+      function dedupeAndSave(){
+        const seen = new Set();
+        const out = [];
+        items.forEach(it=>{
+          const key = (it.title||'').toLowerCase().trim() + '|' + (it.type||'');
+          if(!seen.has(key)){
+            seen.add(key);
+            out.push(it);
+          }
+        });
+        items = out;
+        save();
+      }
+
+      // Filtering / search
+      function matchesFilters(item){
+        // Type filter
+        if(typeFilter !== 'all' && item.type !== typeFilter) return false;
+        // Tab filter: only applies to series/anime related
+        if(activeTab === 'finalizadas' && item.status !== 'completada') return false;
+        if(activeTab === 'finalizadas_manga' && item.status !== 'continua_manga') return false;
+        if(activeTab === 'no_finalizadas' && (item.status === 'completada' || item.status === 'continua_manga')) return false;
+        // Search
+        if(searchQuery){
+          const q = searchQuery.toLowerCase();
+          if(!(item.title || '').toLowerCase().includes(q)) return false;
+        }
+        return true;
+      }
+
+      // Recommendation engines
+      function updateRecommendations(){
+        // Watch now: recommend pending items prioritizing finalizadas (maratoneables)
+        const pending = items.filter(i => i.type === 'serie' || i.type === 'película');
+        const marathoneables = pending.filter(i => i.status === 'completada');
+        const continuesManga = pending.filter(i => i.status === 'continua_manga');
+        const others = pending.filter(i => !['completada','continua_manga'].includes(i.status));
+
+        const watchList = marathoneables.concat(others).slice(0,5).map(i=>i.title);
+        $watchNow.textContent = watchList.length ? watchList.join(' • ') : 'No hay recomendaciones por ahora.';
+
+        $readSuggest.textContent = continuesManga.length ? continuesManga.map(i=>i.title).join(' • ') : 'No hay lecturas sugeridas.';
+
+        // Music suggestions: analyze artists and genres frequency
+        const songs = items.filter(i => i.type === 'canción');
+        const artistCounts = {};
+        songs.forEach(s => {
+          const parts = s.title.split('—').map(p=>p.trim());
+          let artist = '';
+          if(parts.length === 2) artist = parts[1] ? parts[1] : parts[0];
+          // handle 'Artist - Title' too
+          if(!artist && s.title.includes(' - ')){
+            const p2 = s.title.split(' - ').map(p=>p.trim());
+            artist = p2[0];
+          }
+          // fallback: try to detect by comma
+          if(!artist && s.meta){
+            const m = (s.meta||'').toString();
+            if(m.includes('artist')){
+              artist = m.split('artist')[1].slice(0,40);
+            }
+          }
+          artist = (artist || '').toLowerCase();
+          if(!artist) return;
+          artistCounts[artist] = (artistCounts[artist] || 0) + 1;
+        });
+
+        const sortedArtists = Object.keys(artistCounts).sort((a,b)=>artistCounts[b]-artistCounts[a]);
+        if(sortedArtists.length === 0){
+          $musicSuggest.textContent = 'Añade canciones para obtener recomendaciones.';
+          return;
+        }
+
+        // Map artists to genres using local table
+        const genreCounts = {};
+        sortedArtists.forEach(artist=>{
+          for(const key in ARTIST_TO_GENRES){
+            if(artist.includes(key)){
+              ARTIST_TO_GENRES[key].forEach(g=> genreCounts[g] = (genreCounts[g]||0) + artistCounts[artist]);
+            }
+          }
+        });
+
+        // if no genre inferred, try to fuzzy-match first artist to table
+        if(Object.keys(genreCounts).length === 0){
+          const first = sortedArtists[0];
+          for(const key in ARTIST_TO_GENRES){
+            if(first.includes(key)){
+              ARTIST_TO_GENRES[key].forEach(g=> genreCounts[g] = (genreCounts[g]||0) + 1);
+            }
+          }
+        }
+
+        const topGenres = Object.keys(genreCounts).sort((a,b)=>genreCounts[b]-genreCounts[a]).slice(0,3);
+
+        // From top genres, suggest similar genres/artists using GENRE_AFFINITY and ARTIST_TO_GENRES
+        const suggested = new Set();
+        topGenres.forEach(g=>{
+          const aff = GENRE_AFFINITY[g] || [];
+          aff.forEach(ga => {
+            // find artists that have this genre in our table
+            for(const art in ARTIST_TO_GENRES){
+              if(ARTIST_TO_GENRES[art].includes(ga)) suggested.add(capitalize(art));
+            }
+          });
+        });
+
+        // Also suggest artists from top genres directly
+        topGenres.forEach(g=>{
+          for(const art in ARTIST_TO_GENRES){
+            if(ARTIST_TO_GENRES[art].includes(g)) suggested.add(capitalize(art));
+          }
+        });
+
+        // Remove known artists
+        sortedArtists.forEach(a=> suggested.delete(capitalize(a)));
+
+        const suggestedList = Array.from(suggested).slice(0,6);
+        $musicSuggest.textContent = suggestedList.length ? suggestedList.join(' • ') : 'No hay sugerencias nuevas (tabla limitada).';
+      }
+
+      // Rendering
+      function render(){
+        $cards.innerHTML = '';
+        const visible = items.slice().reverse().filter(matchesFilters);
+        if(visible.length === 0){
+          $cards.innerHTML = '<div style="color:var(--muted);padding:12px;background:var(--card);border-radius:12px">No hay entradas que coincidan. Usa el formulario o pega exportaciones y pulsa "Importar".</div>';
+        } else {
+          visible.forEach(item => {
+            $cards.appendChild(cardElement(item));
+          });
+        }
+        updateStats();
+        updateRecommendations();
+      }
+
+      function cardElement(item){
+        const el = document.createElement('article');
+        el.className = 'card';
+        el.setAttribute('data-id', item.id);
+
+        const thumb = document.createElement('div');
+        thumb.className = 'thumb';
+        thumb.textContent = item.type ? item.type[0].toUpperCase() : '?';
+
+        const body = document.createElement('div');
+        body.className = 'card-body';
+
+        const titleRow = document.createElement('div');
+        titleRow.className = 'card-title';
+
+        const titleH3 = document.createElement('h3');
+        titleH3.textContent = item.title || '(sin título)';
+
+        const actions = document.createElement('div');
+        actions.className = 'card-actions';
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'small';
+        editBtn.type = 'button';
+        editBtn.title = 'Editar';
+        editBtn.textContent = 'Editar';
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'small';
+        delBtn.type = 'button';
+        delBtn.title = 'Eliminar';
+        delBtn.textContent = 'Eliminar';
+
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+
+        titleRow.appendChild(titleH3);
+        titleRow.appendChild(actions);
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        const typeSpan = document.createElement('div'); typeSpan.textContent = 'Tipo: ' + (item.type || '-');
+        const statusSpan = document.createElement('div'); statusSpan.textContent = 'Estado: ' + (item.status || '-');
+
+        const noteDiv = document.createElement('div');
+        noteDiv.style.marginTop = '8px';
+        noteDiv.style.whiteSpace = 'pre-wrap';
+        noteDiv.style.color = 'var(--muted)';
+        noteDiv.textContent = item.note || '';
+
+        meta.appendChild(typeSpan);
+        meta.appendChild(statusSpan);
+
+        body.appendChild(titleRow);
+        body.appendChild(meta);
+        body.appendChild(noteDiv);
+
+        // Edit form (hidden until edit)
+        const editForm = document.createElement('div');
+        editForm.className = 'edit-form';
+        editForm.style.display = 'none';
+        editForm.style.marginTop = '8px';
+
+        const inTitle = document.createElement('input');
+        inTitle.type = 'text';
+        inTitle.value = item.title || '';
+        inTitle.placeholder = 'Título';
+
+        const inType = document.createElement('select');
+        ['serie','película','canción'].forEach(t=>{
+          const o = document.createElement('option');
+          o.value = t; o.textContent = t[0].toUpperCase() + t.slice(1);
+          if(t === item.type) o.selected = true;
+          inType.appendChild(o);
+        });
+
+        const inStatus = document.createElement('select');
+        ['planeada','viendo','completada','pausada','abandonada','guardada','continua_manga'].forEach(s=>{
+          const o = document.createElement('option'); o.value = s; o.textContent = s[0].toUpperCase() + s.slice(1).replace('_',' ');
+          if(s === item.status) o.selected = true;
+          inStatus.appendChild(o);
+        });
+
+        const inNote = document.createElement('textarea');
+        inNote.rows = 3; inNote.value = item.note || '';
+        inNote.style.marginTop = '6px';
+
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'small';
+        saveBtn.textContent = 'Guardar';
+        saveBtn.type = 'button';
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'small secondary';
+        cancelBtn.textContent = 'Cancelar';
+        cancelBtn.type = 'button';
+
+        const editControls = document.createElement('div');
+        editControls.style.display = 'flex';
+        editControls.style.gap = '8px';
+        editControls.style.marginTop = '6px';
+        editControls.appendChild(saveBtn);
+        editControls.appendChild(cancelBtn);
+
+        editForm.appendChild(inTitle);
+        editForm.appendChild(inType);
+        editForm.appendChild(inStatus);
+        editForm.appendChild(inNote);
+        editForm.appendChild(editControls);
+
+        body.appendChild(editForm);
+
+        // Bindings
+        editBtn.addEventListener('click', ()=>{
+          editForm.style.display = 'block';
+          titleH3.style.display = 'none';
+          editBtn.style.display = 'none';
+          delBtn.style.display = 'none';
+        });
+
+        cancelBtn.addEventListener('click', ()=>{
+          editForm.style.display = 'none';
+          titleH3.style.display = '';
+          editBtn.style.display = '';
+          delBtn.style.display = '';
+        });
+
+        saveBtn.addEventListener('click', ()=>{
+          const id = item.id;
+          const idx = items.findIndex(i=>i.id===id);
+          if(idx === -1) return;
+          items[idx].title = inTitle.value.trim() || items[idx].title;
+          items[idx].type = inType.value;
+          items[idx].status = inStatus.value;
+          items[idx].note = inNote.value;
+          save();
+          editForm.style.display = 'none';
+          titleH3.style.display = '';
+          editBtn.style.display = '';
+          delBtn.style.display = '';
+        });
+
+        delBtn.addEventListener('click', ()=>{
+          if(!confirm('¿Eliminar esta entrada?')) return;
+          items = items.filter(i=>i.id !== item.id);
+          save();
+          render();
+        });
+
+        el.appendChild(thumb);
+        el.appendChild(body);
+        return el;
+      }
+
+      // Helper: capitalize
+      function capitalize(s){
+        if(!s) return s; return s.split(' ').map(p=>p[0].toUpperCase()+p.slice(1)).join(' ');
+      }
+
+      // Manual form handlers
+      $mAdd.addEventListener('click', ()=>{
+        const title = $mTitle.value.trim();
+        if(!title){
+          alert('Escribe un título.');
+          $mTitle.focus();
+          return;
+        }
+        const entry = {
+          id: uid(),
+          title,
+          type: $mType.value,
+          status: $mStatus.value,
+          note: $mNote.value.trim(),
+          meta: 'manual'
+        };
+        items.push(entry);
+        save();
+        $mTitle.value = '';
+        $mNote.value = '';
+        $mType.value = 'serie';
+        $mStatus.value = 'planeada';
+        $mTitle.focus();
+      });
+
+      $mReset.addEventListener('click', ()=>{
+        $mTitle.value=''; $mNote.value=''; $mType.value='serie'; $mStatus.value='planeada';
+      });
+
+      // Import buttons
+      $btnImport.addEventListener('click', ()=>{
+        importFromAreas();
+      });
+
+      $btnClearImport.addEventListener('click', ()=>{
+        if(confirm('Limpiar las dos áreas de importación?')) {
+          $anilist.value = ''; $spotify.value = '';
+        }
+      });
+
+      $btnClearAll.addEventListener('click', ()=>{
+        if(!confirm('Eliminar todas las entradas guardadas? Esta acción no se puede deshacer.')) return;
+        items = [];
+        save();
+        localStorage.removeItem(STORAGE_KEY);
+        render();
+      });
+
+      // Tabs handlers
+      $tabs.forEach(t => {
+        t.addEventListener('click', ()=>{
+          $tabs.forEach(x=>x.classList.remove('active'));
+          t.classList.add('active');
+          activeTab = t.dataset.tab;
+          render();
+        });
+      });
+      // Activate default tab
+      document.querySelector('.tab[data-tab="all"]').classList.add('active');
+
+      // Search and type filter
+      $search.addEventListener('input', (e)=>{
+        searchQuery = e.target.value.trim();
+        render();
+      });
+      $filterType.addEventListener('change', (e)=>{
+        typeFilter = e.target.value;
+        render();
+      });
+
+      // Init
+      load();
+      render();
+
+      // Expose a small helper for debugging in console
+      window.MiTracker = {
+        get items(){ return items; },
+        save,
+        load,
+        importFromAreas
+      };
+
+      // Accessibility: keyboard shortcut: Ctrl+I to focus first import
+      window.addEventListener('keydown', (e)=>{
+        if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i'){
+          e.preventDefault();
+          $anilist.focus();
+        }
+      });
+
+    })();
+  </script>
+</body>
+</html>
