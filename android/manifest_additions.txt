@@ -1,0 +1,6 @@
+// AndroidManifest additions (partial)
+
+<!-- Add permission for Android 13+ -->
+<uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+<!-- Fallback for older Android versions -->
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />

@@ -1,0 +1,4 @@
+// iOS Info.plist additions (partial)
+
+<key>NSAppleMusicUsageDescription</key>
+<string>Need access to your music library to play local tracks</string>

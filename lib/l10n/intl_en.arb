@@ -1,0 +1,9 @@
+// lib/l10n/intl_en.arb
+{
+  "@@locale": "en",
+  "appTitle": "Music Player",
+  "libraryTitle": "Library",
+  "noTracks": "No tracks found",
+  "nowPlaying": "Now Playing",
+  "nothingPlaying": "Nothing playing"
+}

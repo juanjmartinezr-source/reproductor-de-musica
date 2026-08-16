@@ -1,0 +1,9 @@
+// lib/l10n/intl_pt.arb
+{
+  "@@locale": "pt",
+  "appTitle": "Reprodutor de Música",
+  "libraryTitle": "Biblioteca",
+  "noTracks": "Nenhuma faixa encontrada",
+  "nowPlaying": "Tocando agora",
+  "nothingPlaying": "Nada tocando"
+}
